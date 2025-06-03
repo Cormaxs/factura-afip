@@ -14,7 +14,7 @@ Empezar leyendo el pdf para desarrolladores [aquí](https://www.afip.gob.ar/fe/a
 -1 solicitar ticket de acceso a un WSN
 Vamos a necesitar tener instalados los programas
 
-*[Openssl](https://slproweb.com/products/Win32OpenSSL.html) -> le dan click al primero que les salga [Image Alt](./components-readme/openssl-donwload.png)
+* [Openssl](https://slproweb.com/products/Win32OpenSSL.html) -> le dan click al primero que les salga ![Image Alt](./components-readme/openssl-donwload.png)
 una ves instalado necesitamos Editar las variables de entorno de windows, la ruta que deben poner es (recomiendo que creen la ruta(path) en sistema y no para usuario):
 
 ```bash
@@ -27,4 +27,13 @@ despues abren CMD y ponen
 openssl --version
 ```
 
-una ves instalado onpenssl nos vamos a leer el manual de [certificados](https://www.afip.gob.ar/ws/WSASS/WSASS_manual.pdf)
+una ves instalado onpenssl nos vamos a leer el manual de [certificados](https://www.afip.gob.ar/ws/WSASS/WSASS_manual.pdf).
+Necesitamos generar un archivo .csr y la clave privada .key.
+En la pagina 10 del pdf muestra "CÓMO GENERAR UNA SOLICITUD DE CERTIFICADO (CSR)".
+Nos deja el codigo **PRIMERO DEBEMOS GENERAR LA CLAVE PRIVADA PARA DESPUES USARLA Y SACAR EL CERTIFICADO**
+
+```bash
+openssl genrsa -out MiClavePrivada.key 2048
+```
+
+'Se recomienda usar una carpeta especifica para los archivos descargados del proyecto'
