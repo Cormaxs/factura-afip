@@ -82,3 +82,6 @@ Una ves dentro dbemos reyenar los campos:
 4. copiamos lo que nos da, vamos a nuestra carpeta donde tenemos los demas archivos, abrimos un bloc de notas y lo pegamos, pero al guardar le cambian la extension de .TXT a .crt (extension de certificado)
 
 ![Image Alt](./components-readme/sacando-certificado.png)
+
+en nuestros archivos nos quedaria asi :
+![Image Alt](./components-readme/files-certificado.png)
