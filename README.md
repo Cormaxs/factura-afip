@@ -72,4 +72,13 @@ Se les debe crear un nuevo archivo .csr
 ## Ahora vamos a utilizar ese archivo .csr 
 
 * vamos a la pagina de [AFIP](https://auth.afip.gob.ar/contribuyente_/login.xhtml)
-Entramos a nuestra cuenta de afip y en el buscador ponemos WSA ![Image Alt](./components-readme/afip-wsa-busqueda.png)
+Entramos a nuestra cuenta de afip y en el buscador ponemos WSA ![Image Alt](./components-readme/afip-wsa-busqueda.png) como estamos en ambiente de testing usamos ese, despues en produción lo cambiamos.
+
+Una ves dentro dbemos reyenar los campos:
+
+1. Nombre simbolico de DN -> ponemos el que querramos
+2. CUIT del contribuyente (se pone automatico)
+3. Solicitud de certificado en formato PKCS#10 -> debemos copiar el contenido de nuestro archivo .csr y pegarlo Luego le damos en "Crear DN y obtener certificado"
+4. copiamos lo que nos da, vamos a nuestra carpeta donde tenemos los demas archivos, abrimos un bloc de notas y lo pegamos, pero al guardar le cambian la extension de .TXT a .crt (extension de certificado)
+
+![Image Alt](./components-readme/sacando-certificado.png)
