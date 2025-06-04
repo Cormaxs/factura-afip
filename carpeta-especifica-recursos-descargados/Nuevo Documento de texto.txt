@@ -1,0 +1,1 @@
+powershell.exe -ExecutionPolicy Bypass -File "C:\Users\tomas\Desktop\factura-electronica-afip\factura-afip\carpeta-especifica-recursos-descargados\wsaa-cliente-modificado.ps1"

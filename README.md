@@ -11,7 +11,6 @@ Empezar leyendo el pdf para desarrolladores [aquí](https://www.afip.gob.ar/fe/a
 
 ![Image Alt](./components-readme/arquitectura-general.png)
 
--1 solicitar ticket de acceso a un WSN
 Vamos a necesitar tener instalados los programas
 
 * [Openssl](https://slproweb.com/products/Win32OpenSSL.html) -> le dan click al primero que les salga ![Image Alt](./components-readme/openssl-donwload.png)
@@ -85,3 +84,104 @@ Una ves dentro dbemos reyenar los campos:
 
 en nuestros archivos nos quedaria asi :
 ![Image Alt](./components-readme/files-certificado.png)
+
+## CON ESOS 3 ARCHIVOS AHORA PODEMOS HACER EL PASO 1
+
+-1 solicitar ticket de acceso a un WSN
+
+En la web vamos [aquí](https://www.afip.gob.ar/ws/documentacion/wsaa.asp) ![Image Alt](./components-readme/web-WSAA.png).
+Seleccionamos el lenguaje que vayamos a usar o directamente powershell(en este caso powerShell)
+vamos a la carpeta descargada, a /souce y nos aparece el archivo wsaa-cliente.ps1 -> .ps1 es powershell dentro de ese archivo explica más de que hace cada parte. Antes de ejecutar el comando powershell debemos ir de nuevo a [AFIP](https://wsass-homo.afip.gob.ar/wsass/portal/main.aspx).
+Seleccionamos "Crear autorización a servicio"
+![Image Alt](./components-readme/crear-autorizacion-servicio.png)
+ y nos saldria algo como :
+ ![image alt](./components-readme/autorizacion-ok.png)
+
+### RECUERDEN MODIFICAR EL CAMPO 5
+
+5. Servicio al que desea acceder -> pongan wsfe - Facturacion Electronica (pueden escribirlo para encontrarlo mas rapido).
+
+Una ves tengan la autorizacion creada, cambiamos los parametros del script y luego ejecutamos el script de powershell descargado (copian y ejecutan todo):
+- Certificado -> certificado.crt
+- ClavePrivada -> mi clave privada.key
+- WsaaWsdl -> cambiamos la ruta solo en producción
+
+**RECUERDEN TENER LA VENTANA DE POWERSHELL EN LA CARPETA DONDE ESTAN TODOS LOS ARCHIVOS NECESARIOS**
+
+```bash
+#
+# Ejemplo de cliente del WSAA (webservice de autenticacion y autorizacion). 
+# Consume el metodo LoginCms ejecutando desde la Powershell de Windows. 
+# Muestra en stdout el login ticket response.
+#
+# REQUISITOS: openssl
+#
+# Parametros de linea de comandos:
+#
+#   $Certificado: Archivo del certificado firmante a usar
+#   $ClavePrivada: Archivo de clave privada a usar
+#   $ServicioId: ID de servicio a acceder
+#   $OutXml: Archivo TRA a crear
+#   $OutCms: Archivo CMS a crear
+#   $WsaaWsdl: URL del WSDL del WSAA
+#
+[CmdletBinding()]
+Param(
+   [Parameter(Mandatory=$False)]
+   [string]$Certificado="myCert.crt",
+	
+   [Parameter(Mandatory=$False)]
+   [string]$ClavePrivada="myPrivate.key",
+   
+   [Parameter(Mandatory=$False)]
+   [string]$ServicioId="wsfe",
+   
+   [Parameter(Mandatory=$False)]
+   [string]$OutXml="LoginTicketRequest.xml",   
+   
+   [Parameter(Mandatory=$False)]
+   [string]$OutCms="LoginTicketRequest.xml.cms",   
+
+   [Parameter(Mandatory=$False)]
+   [string]$WsaaWsdl = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?WSDL"    
+)
+
+$ErrorActionPreference = "Stop"
+
+# PASO 1: ARMAR EL XML DEL TICKET DE ACCESO
+$dtNow = Get-Date 
+$xmlTA = New-Object System.XML.XMLDocument
+$xmlTA.LoadXml('<loginTicketRequest><header><uniqueId></uniqueId><generationTime></generationTime><expirationTime></expirationTime></header><service></service></loginTicketRequest>')
+$xmlUniqueId = $xmlTA.SelectSingleNode("//uniqueId")
+$xmlGenTime = $xmlTA.SelectSingleNode("//generationTime")
+$xmlExpTime = $xmlTA.SelectSingleNode("//expirationTime")
+$xmlService = $xmlTA.SelectSingleNode("//service")
+$xmlGenTime.InnerText = $dtNow.AddMinutes(-10).ToString("s")
+$xmlExpTime.InnerText = $dtNow.AddMinutes(+10).ToString("s")
+$xmlUniqueId.InnerText = $dtNow.ToString("yyMMddHHMM")
+$xmlService.InnerText = $ServicioId
+$seqNr = Get-Date -UFormat "%Y%m%d%H%S"
+$xmlTA.InnerXml | Out-File $seqNr-$OutXml -Encoding ASCII
+
+# PASO 2: FIRMAR CMS
+openssl cms -sign -in $seqNr-$OutXml -signer $Certificado -inkey $ClavePrivada -nodetach -outform der -out $seqNr-$OutCms-DER
+
+# PASO 3: ENCODEAR EL CMS EN BASE 64
+openssl base64 -in $seqNr-$OutCms-DER -e -out $seqNr-$OutCms-DER-b64
+
+# PASO 3: INVOCAR AL WSAA
+try
+{
+   $cms = Get-Content $seqNr-$OutCms-DER-b64 -Raw
+   $wsaa = New-WebServiceProxy -Uri $WsaaWsdl -ErrorAction Stop
+   $wsaaResponse = $wsaa.loginCms($cms) 
+   $wsaaResponse > $seqNr-loginTicketResponse.xml 
+   $wsaaResponse
+}
+catch
+{
+   $errMsg = $_.Exception.Message
+   $errMsg > $seqNr-loginTicketResponse-ERROR.xml 
+   $errMsg
+}
+```
